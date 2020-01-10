@@ -14,6 +14,8 @@ class LedgerImpl;
 
 namespace braveledger_database {
 
+class DatabaseMigration;
+
 class DatabaseInitialize {
  public:
   explicit DatabaseInitialize(bat_ledger::LedgerImpl* ledger);
@@ -45,6 +47,7 @@ class DatabaseInitialize {
       const int table_version,
       ledger::ResultCallback callback);
 
+  std::unique_ptr<DatabaseMigration> migration_;
   bat_ledger::LedgerImpl* ledger_;  // NOT OWNED
 };
 

@@ -91,7 +91,7 @@ class LedgerImpl : public ledger::Ledger,
   void SetPublisherInfo(
       ledger::PublisherInfoPtr publisher_info);
 
-  void SetActivityInfo(
+  void SaveActivityInfo(
       ledger::PublisherInfoPtr publisher_info);
 
   void GetPublisherInfo(const std::string& publisher_key,
@@ -410,8 +410,7 @@ class LedgerImpl : public ledger::Ledger,
   void HasSufficientBalanceToReconcile(
       ledger::HasSufficientBalanceToReconcileCallback callback) override;
 
-  void SaveNormalizedPublisherList(
-      ledger::PublisherInfoList normalized_list);
+  void SaveNormalizedPublisherList(ledger::PublisherInfoList list);
 
   void SetCatalogIssuers(const std::string& info) override;
   void ConfirmAd(const std::string& info) override;
@@ -503,7 +502,7 @@ class LedgerImpl : public ledger::Ledger,
 
   void DeleteActivityInfo(
       const std::string& publisher_key,
-      ledger::DeleteActivityInfoCallback callback);
+      ledger::ResultCallback callback);
 
   void ClearAndInsertServerPublisherList(
       ledger::ServerPublisherInfoList list,
@@ -683,7 +682,7 @@ class LedgerImpl : public ledger::Ledger,
   void RefreshPromotions(bool retryAfterError);
 
   void OnPublisherInfoSavedInternal(
-      ledger::Result result,
+      const ledger::Result result,
       ledger::PublisherInfoPtr info);
 
   void DownloadPublisherList(
@@ -695,6 +694,11 @@ class LedgerImpl : public ledger::Ledger,
       const std::map<std::string, std::string>& headers,
       const std::string& publisher_key,
       ledger::OnRefreshPublisherCallback callback);
+
+  void OnGetActivityInfo(
+      ledger::PublisherInfoList list,
+      ledger::PublisherInfoCallback callback,
+      const std::string& publisher_key);
 
   ledger::LedgerClient* ledger_client_;
   std::unique_ptr<braveledger_promotion::Promotion> bat_promotion_;

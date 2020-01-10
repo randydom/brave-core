@@ -134,9 +134,6 @@ class PublisherInfoDatabase {
   // Returns the current version of the publisher info database
   int GetCurrentVersion();
 
-  bool DeleteActivityInfo(const std::string& publisher_key,
-                          uint64_t reconcile_stamp);
-
   void GetTransactionReport(
       ledger::TransactionReportInfoList* list,
       const ledger::ActivityMonth month,

@@ -275,16 +275,6 @@ bool PublisherInfoDatabase::GetActivityList(
       list);
 }
 
-bool PublisherInfoDatabase::DeleteActivityInfo(
-    const std::string& publisher_key,
-    uint64_t reconcile_stamp) {
-  if (!IsInitialized()) {
-    return false;
-  }
-
-  return activity_info_->DeleteRecord(&GetDB(), publisher_key, reconcile_stamp);
-}
-
 /**
  *
  * MEDIA PUBLISHER INFO
