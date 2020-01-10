@@ -81,7 +81,9 @@ class LedgerImpl : public ledger::Ledger,
 
   std::string GenerateGUID() const;
 
-  void Initialize(ledger::InitializeCallback callback) override;
+  void Initialize(
+      const bool execute_create_script,
+      ledger::InitializeCallback callback) override;
 
   void CreateWallet(const std::string& safetynet_token,
                     ledger::CreateWalletCallback callback) override;
@@ -617,6 +619,8 @@ class LedgerImpl : public ledger::Ledger,
   void RunDBTransaction(
       ledger::DBTransactionPtr transaction,
       ledger::RunDBTransactionCallback callback);
+
+  void GetCreateScript(ledger::GetCreateScriptCallback callback);
 
  private:
   void OnLoad(ledger::VisitDataPtr visit_data,

@@ -757,6 +757,9 @@ class RewardsServiceImpl : public RewardsService,
       ledger::DBTransactionPtr transaction,
       ledger::RunDBTransactionCallback callback) override;
 
+  void GetCreateScript(
+      ledger::GetCreateScriptCallback callback) override;
+
   // end ledger::LedgerClient
 
   // Mojo Proxy methods

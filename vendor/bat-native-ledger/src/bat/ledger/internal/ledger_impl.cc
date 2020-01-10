@@ -105,7 +105,9 @@ void LedgerImpl::OnWalletInitializedInternal(
   }
 }
 
-void LedgerImpl::Initialize(ledger::InitializeCallback callback) {
+void LedgerImpl::Initialize(
+    const bool execute_create_script,
+    ledger::InitializeCallback callback) {
   DCHECK(!initializing_);
   initializing_ = true;
 
@@ -119,7 +121,8 @@ void LedgerImpl::Initialize(ledger::InitializeCallback callback) {
       this,
       _1,
       finish_callback);
-  bat_database_->Initialize(database_callback);
+  // We need to add new param to initialize
+  bat_database_->Initialize(execute_create_script, database_callback);
 }
 
 void LedgerImpl::CreateWallet(const std::string& safetynet_token,
@@ -1600,6 +1603,11 @@ void LedgerImpl::RunDBTransaction(
     ledger::DBTransactionPtr transaction,
     ledger::RunDBTransactionCallback callback) {
   ledger_client_->RunDBTransaction(std::move(transaction), callback);
+}
+
+void LedgerImpl::GetCreateScript(
+    ledger::GetCreateScriptCallback callback) {
+  ledger_client_->GetCreateScript(callback);
 }
 
 }  // namespace bat_ledger

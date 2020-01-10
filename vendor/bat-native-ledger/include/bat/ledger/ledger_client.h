@@ -83,6 +83,8 @@ using GetContributionReportCallback =
     std::function<void(ledger::ContributionReportInfoList)>;
 
 using RunDBTransactionCallback = std::function<void(DBCommandResponsePtr)>;
+using GetCreateScriptCallback =
+    std::function<void(const std::string&, const int)>;
 
 class LEDGER_EXPORT LedgerClient {
  public:
@@ -341,6 +343,8 @@ class LEDGER_EXPORT LedgerClient {
   virtual void RunDBTransaction(
       ledger::DBTransactionPtr transaction,
       ledger::RunDBTransactionCallback callback) = 0;
+
+  virtual void GetCreateScript(ledger::GetCreateScriptCallback callback) = 0;
 };
 
 }  // namespace ledger

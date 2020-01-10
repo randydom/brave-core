@@ -541,7 +541,7 @@ void RewardsServiceImpl::StartLedger() {
   auto callback = base::BindOnce(&RewardsServiceImpl::OnWalletInitialized,
       AsWeakPtr());
 
-  bat_ledger_->Initialize(std::move(callback));
+  bat_ledger_->Initialize(false, std::move(callback));
 }
 
 void RewardsServiceImpl::OnResult(
@@ -4611,6 +4611,11 @@ void RewardsServiceImpl::OnRunDBTransaction(
     ledger::RunDBTransactionCallback callback,
     ledger::DBCommandResponsePtr response) {
   callback(std::move(response));
+}
+
+void RewardsServiceImpl::GetCreateScript(
+    ledger::GetCreateScriptCallback callback) {
+  callback("", 0);
 }
 
 }  // namespace brave_rewards
