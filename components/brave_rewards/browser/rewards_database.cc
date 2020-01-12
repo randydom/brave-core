@@ -222,8 +222,7 @@ ledger::DBCommandResponse::Status RewardsDatabase::Run(
     return ledger::DBCommandResponse::Status::INITIALIZATION_ERROR;
   }
 
-  sql::Statement statement(db_.GetCachedStatement(SQL_FROM_HERE,
-      command->command.c_str()));
+  sql::Statement statement(db_.GetUniqueStatement(command->command.c_str()));
 
   for (auto const& binding : command->bindings) {
     HandleBinding(&statement, *binding.get());
@@ -249,7 +248,7 @@ ledger::DBCommandResponse::Status RewardsDatabase::Read(
   }
 
   sql::Statement statement(
-      db_.GetCachedStatement(SQL_FROM_HERE, command->command.c_str()));
+      db_.GetUniqueStatement(command->command.c_str()));
 
   for (auto const& binding : command->bindings) {
     HandleBinding(&statement, *binding.get());

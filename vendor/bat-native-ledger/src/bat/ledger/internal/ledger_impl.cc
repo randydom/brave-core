@@ -182,12 +182,6 @@ void LedgerImpl::OnShow(uint32_t tab_id, const uint64_t& current_time) {
   last_shown_tab_id_ = tab_id;
 }
 
-void LedgerImpl::OnSaveVisit(
-    ledger::Result result,
-    ledger::PublisherInfoPtr info) {
-  // TODO(nejczdovc): handle if needed
-}
-
 void LedgerImpl::OnHide(uint32_t tab_id, const uint64_t& current_time) {
   if (!GetRewardsMainEnabled() || !GetAutoContribute()) {
     return;
@@ -213,17 +207,12 @@ void LedgerImpl::OnHide(uint32_t tab_id, const uint64_t& current_time) {
     return;
   }
 
-  auto callback = std::bind(&LedgerImpl::OnSaveVisit,
-      this,
-      _1,
-      _2);
-
   bat_publisher_->SaveVisit(
       iter->second.tld,
       iter->second,
       duration,
       0,
-      callback);
+      [](ledger::Result, ledger::PublisherInfoPtr){});
 }
 
 void LedgerImpl::OnForeground(uint32_t tab_id, const uint64_t& current_time) {
@@ -456,13 +445,12 @@ void LedgerImpl::OnPublisherInfoSavedInternal(
   bat_publisher_->OnPublisherInfoSaved(result, std::move(info));
 }
 
-void LedgerImpl::SetPublisherInfo(ledger::PublisherInfoPtr info) {
-  ledger_client_->SavePublisherInfo(
-      std::move(info),
-      std::bind(&LedgerImpl::OnPublisherInfoSavedInternal,
-                this,
-                _1,
-                _2));
+void LedgerImpl::SavePublisherInfo(ledger::PublisherInfoPtr info) {
+  bat_database_->SavePublisherInfo(
+      info->Clone(),
+      [](const ledger::Result){});
+  // TODO fix to call OnPublisherInfoSavedInternal as a callback
+  OnPublisherInfoSavedInternal(ledger::Result::LEDGER_OK, info->Clone());
 }
 
 void LedgerImpl::SaveActivityInfo(ledger::PublisherInfoPtr info) {
@@ -470,6 +458,7 @@ void LedgerImpl::SaveActivityInfo(ledger::PublisherInfoPtr info) {
   bat_database_->SaveActivityInfo(
       info->Clone(),
       [](const ledger::Result){});
+  OnPublisherInfoSavedInternal(ledger::Result::LEDGER_OK, info->Clone());
 }
 
 void LedgerImpl::SetMediaPublisherInfo(const std::string& media_key,
@@ -503,8 +492,8 @@ void LedgerImpl::SetPublisherExclude(
   bat_publisher_->SetPublisherExclude(publisher_id, exclude, callback);
 }
 
-void LedgerImpl::RestorePublishers(ledger::RestorePublishersCallback callback) {
-  ledger_client_->RestorePublishers(
+void LedgerImpl::RestorePublishers(ledger::ResultCallback callback) {
+  bat_database_->RestorePublishers(
     std::bind(&LedgerImpl::OnRestorePublishers,
               this,
               _1,
@@ -513,7 +502,7 @@ void LedgerImpl::RestorePublishers(ledger::RestorePublishersCallback callback) {
 
 void LedgerImpl::OnRestorePublishers(
     const ledger::Result result,
-    ledger::RestorePublishersCallback callback) {
+    ledger::ResultCallback callback) {
   bat_publisher_->OnRestorePublishers(result, callback);
 }
 
@@ -521,9 +510,10 @@ void LedgerImpl::LoadNicewareList(ledger::GetNicewareListCallback callback) {
   ledger_client_->LoadNicewareList(callback);
 }
 
-void LedgerImpl::GetPublisherInfo(const std::string& publisher_key,
-                                  ledger::PublisherInfoCallback callback) {
-  ledger_client_->LoadPublisherInfo(publisher_key, callback);
+void LedgerImpl::GetPublisherInfo(
+    const std::string& publisher_key,
+    ledger::PublisherInfoCallback callback) {
+  bat_database_->GetPublisherInfo(publisher_key, callback);
 }
 
 void LedgerImpl::OnGetActivityInfo(
@@ -532,7 +522,10 @@ void LedgerImpl::OnGetActivityInfo(
     const std::string& publisher_key) {
   if (list.size() == 0) {
     GetPublisherInfo(publisher_key, callback);
-  } else if (list.size() > 1) {
+    return;
+  }
+
+  if (list.size() > 1) {
     callback(ledger::Result::TOO_MANY_RESULTS, nullptr);
     return;
   }
@@ -559,7 +552,7 @@ void LedgerImpl::GetActivityInfo(
 void LedgerImpl::GetPanelPublisherInfo(
     ledger::ActivityInfoFilterPtr filter,
     ledger::PublisherInfoCallback callback) {
-  ledger_client_->LoadPanelPublisherInfo(std::move(filter), callback);
+  bat_database_->GetPanelPublisherInfo(std::move(filter), callback);
 }
 
 void LedgerImpl::GetMediaPublisherInfo(
@@ -578,6 +571,10 @@ void LedgerImpl::GetActivityInfoList(
       limit,
       std::move(filter),
       callback);
+}
+
+void LedgerImpl::GetExcludedList(ledger::PublisherInfoListCallback callback) {
+  bat_database_->GetExcludedList(callback);
 }
 
 void LedgerImpl::SetRewardsMainEnabled(bool enabled) {

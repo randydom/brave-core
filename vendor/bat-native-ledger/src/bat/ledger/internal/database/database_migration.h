@@ -15,6 +15,7 @@ class LedgerImpl;
 namespace braveledger_database {
 
 class DatabaseActivityInfo;
+class DatabasePublisherInfo;
 
 class DatabaseMigration {
  public:
@@ -59,6 +60,7 @@ class DatabaseMigration {
   bool MigrateV14toV15(ledger::DBTransaction* transaction);
 
   std::unique_ptr<DatabaseActivityInfo> activity_info_;
+  std::unique_ptr<DatabasePublisherInfo> publisher_info_;
   bat_ledger::LedgerImpl* ledger_;  // NOT OWNED
 };
 
