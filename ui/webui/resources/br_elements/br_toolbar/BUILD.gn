@@ -1,0 +1,60 @@
+import("//third_party/closure_compiler/compile_js.gni")
+import("//tools/polymer/polymer.gni")
+
+js_type_check("closure_compile") {
+  deps = [
+    ":br_toolbar",
+    ":br_toolbar_search_field",
+  ]
+}
+
+js_library("br_toolbar_search_field") {
+  deps = [
+    "//ui/webui/resources/cr_elements/cr_search_field:cr_search_field_behavior",
+  ]
+}
+
+js_library("br_toolbar") {
+}
+
+polymer_modulizer("br_toolbar") {
+  js_file = "br_toolbar.js"
+  html_file = "br_toolbar.html"
+  html_type = "dom-module"
+}
+
+polymer_modulizer("br_toolbar_search_field") {
+  js_file = "br_toolbar_search_field.js"
+  html_file = "br_toolbar_search_field.html"
+  html_type = "dom-module"
+}
+
+js_type_check("closure_compile_module") {
+  is_polymer3 = true
+  deps = [
+    ":br_toolbar.m",
+    ":br_toolbar_search_field.m",
+  ]
+}
+
+js_library("br_toolbar.m") {
+  sources = [
+    "$root_gen_dir/brave/ui/webui/resources/br_elements/br_toolbar/br_toolbar.m.js",
+  ]
+  deps = [
+    ":br_toolbar_search_field.m",
+    "//third_party/polymer/v3_0/components-chromium/polymer:polymer_bundled",
+  ]
+  extra_deps = [ ":br_toolbar_module" ]
+}
+
+js_library("br_toolbar_search_field.m") {
+  sources = [
+    "$root_gen_dir/brave/ui/webui/resources/br_elements/br_toolbar/br_toolbar_search_field.m.js",
+  ]
+  deps = [
+    "//third_party/polymer/v3_0/components-chromium/polymer:polymer_bundled",
+    "//ui/webui/resources/cr_elements/cr_search_field:cr_search_field_behavior.m",
+  ]
+  extra_deps = [ ":br_toolbar_search_field_module" ]
+}

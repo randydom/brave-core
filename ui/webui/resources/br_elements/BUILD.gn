@@ -1,0 +1,28 @@
+import("//third_party/closure_compiler/compile_js.gni")
+import("//tools/polymer/polymer.gni")
+import("//ui/webui/resources/tools/js_modulizer.gni")
+
+group("closure_compile") {
+  deps = [
+    "br_toolbar:closure_compile",
+
+    # Targets for auto-generated Polymer 3 JS Modules
+    "br_toolbar:closure_compile_module",
+  ]
+}
+
+# Targets for auto-generating Polymer 3 JS Modules.
+polymer_modulizer("shared_vars_css") {
+  # NOTE: this JS file doesn't exist, which I think causes a problem
+  js_file = "shared_vars_css.m.js"
+  html_file = "shared_vars_css.html"
+  html_type = "custom-style"
+}
+
+group("polymer3_elements") {
+  deps = [
+    "br_toolbar:br_toolbar_module",
+    "br_toolbar:br_toolbar_search_field_module",
+    ":shared_vars_css_module",
+  ]
+}

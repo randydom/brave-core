@@ -1,5 +1,7 @@
 import("//tools/grit/grit_rule.gni")
 import("//ui/webui/webui_features.gni")
+import("//third_party/closure_compiler/compile_js.gni")
+import("//tools/polymer/polymer.gni")
 
 grit("resources") {
   defines = [ "optimize_webui=$optimize_webui" ]
@@ -20,5 +22,31 @@ grit("resources") {
   grit_flags = [
     "-E",
     "root_gen_dir=" + rebase_path(root_gen_dir, root_build_dir),
+  ]
+}
+
+# Targets for auto-generating Polymer 3 JS Modules.
+polymer_modulizer("polymer_overriding") {
+  js_file = "polymer_overriding.js"
+  html_file = "polymer_overriding.html"
+  html_type = "dom-module"
+}
+
+group("polymer3_elements") {
+  deps = [
+    ":polymer_overriding_module",
+  ]
+}
+
+group("closure_compile") {
+  deps = [
+    "br_elements:closure_compile",
+  ]
+}
+
+group("modulize") {
+  deps = [
+    "br_elements:polymer3_elements",
+    ":polymer3_elements"
   ]
 }
