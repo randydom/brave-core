@@ -7,8 +7,10 @@
 
 #include "base/bind.h"
 #include "base/no_destructor.h"
+#include "brave/browser/brave_browser_process_impl.h"
 #include "brave/browser/ui/webui/new_tab_page/new_tab_page_branded_view_counter.h" //  NOLINT
 #include "brave/common/pref_names.h"
+#include "brave/components/ntp_sponsored_images/ntp_sponsored_images_data.h"
 #include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/common/chrome_features.h"
@@ -37,6 +39,25 @@ std::unique_ptr<BrandedWallpaper> GetDemoWallpaper() {
   return demo;
 }
 
+std::unique_ptr<BrandedWallpaper> GetWallpaperFromData(
+    const NTPSponsoredImagesData& data) {
+  // Validate
+  if (data.wallpaper_image_count <= 0) {
+    return nullptr;
+  }
+  auto wallpaper = std::make_unique<BrandedWallpaper>();
+  wallpaper->logo = std::make_unique<BrandedWallpaperLogo>();
+  wallpaper->logo->altText = data.logo_alt_text;
+  wallpaper->logo->companyName = data.logo_company_name;
+  wallpaper->logo->destinationUrl = data.logo_destination_url;
+  wallpaper->logo->imageUrl = "chrome://branded-wallpaper/logo.png";
+  for (int i = 0; i < data.wallpaper_image_count; i++) {
+    wallpaper->wallpaperImageUrls.push_back(
+        "chrome://branded-wallpaper/wallpaper-" + std::to_string(i) + ".jpg");
+  }
+  return wallpaper;
+}
+
 class NewTabPageBrandedViewCounterFactory
     : public BrowserContextKeyedServiceFactory {
  public:
@@ -59,8 +80,12 @@ class NewTabPageBrandedViewCounterFactory
   // BrowserContextKeyedServiceFactory:
   KeyedService* BuildServiceInstanceFor(
       content::BrowserContext* browser_context) const override {
-    return new NewTabPageBrandedViewCounter(
+    NewTabPageBrandedViewCounter* instance = new NewTabPageBrandedViewCounter(
         Profile::FromBrowserContext(browser_context));
+    NTPSponsoredImagesComponentManager* manager =
+        g_brave_browser_process->ntp_sponsored_images_component_manager();
+    manager->AddObserver(instance);
+    return instance;
   }
   content::BrowserContext* GetBrowserContextToUse(
       content::BrowserContext* context) const override {
@@ -85,10 +110,20 @@ NewTabPageBrandedViewCounter::NewTabPageBrandedViewCounter(Profile* profile)
   // TODO(petemill): Update the private var when the data source gets
   // new content, when we have a data source!
   // Set demo wallpaper if a flag is set.
-  if (base::FeatureList::IsEnabled(features::kBraveNTPBrandedWallpaper) &&
-      base::FeatureList::IsEnabled(features::kBraveNTPBrandedWallpaperDemo)) {
-    current_wallpaper_ = GetDemoWallpaper();
+  if (base::FeatureList::IsEnabled(features::kBraveNTPBrandedWallpaper)) {
+    if (base::FeatureList::IsEnabled(features::kBraveNTPBrandedWallpaperDemo)) {
+      current_wallpaper_ = GetDemoWallpaper();
+    } else {
+      // Check if we have real data
+      const auto optional_data = g_brave_browser_process->
+          ntp_sponsored_images_component_manager()->
+          GetLatestSponsoredImagesData();
+      if (optional_data) {
+        current_wallpaper_ = GetWallpaperFromData(*optional_data);
+      }
+    }
   }
+
   // Observe relevant preferences that affect whether we should show
   // wallpaper or count views.
   SetShouldShowFromPreferences();
@@ -103,6 +138,18 @@ NewTabPageBrandedViewCounter::NewTabPageBrandedViewCounter(Profile* profile)
 }
 
 NewTabPageBrandedViewCounter::~NewTabPageBrandedViewCounter() { }
+
+void NewTabPageBrandedViewCounter::OnUpdated(
+    const NTPSponsoredImagesData& data) {
+  // Do nothing with real data if we are in 'demo mode'.
+  if (base::FeatureList::IsEnabled(features::kBraveNTPBrandedWallpaperDemo)) {
+    return;
+  }
+  // Data is updated, so change our stored data and reset any indexes.
+  // But keep view counter until branded content is seen.
+  current_wallpaper_image_index_ = 0;
+  current_wallpaper_ = GetWallpaperFromData(data);
+}
 
 void NewTabPageBrandedViewCounter::RegisterPageView() {
   // Don't do any counting if we will never be showing the data
