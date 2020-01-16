@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "bat/ads/notification_info.h"
+#include "bat/ads/ad_notification_info.h"
 #include "bat/ads/confirmation_type.h"
 
 #include "bat/ads/internal/json_helper.h"
@@ -12,35 +12,20 @@
 
 namespace ads {
 
-NotificationInfo::NotificationInfo() :
-    id(""),
-    creative_set_id(""),
-    category(""),
-    advertiser(""),
-    text(""),
-    url(""),
-    uuid(""),
-    type(ConfirmationType::UNKNOWN) {}
+AdNotificationInfo::AdNotificationInfo() = default;
 
-NotificationInfo::NotificationInfo(const NotificationInfo& info) :
-    id(info.id),
-    creative_set_id(info.creative_set_id),
-    category(info.category),
-    advertiser(info.advertiser),
-    text(info.text),
-    url(info.url),
-    uuid(info.uuid),
-    type(info.type) {}
+AdNotificationInfo::AdNotificationInfo(
+    const AdNotificationInfo& info) = default;
 
-NotificationInfo::~NotificationInfo() = default;
+AdNotificationInfo::~AdNotificationInfo() = default;
 
-const std::string NotificationInfo::ToJson() const {
+const std::string AdNotificationInfo::ToJson() const {
   std::string json;
   SaveToJson(*this, &json);
   return json;
 }
 
-Result NotificationInfo::FromJson(
+Result AdNotificationInfo::FromJson(
     const std::string& json,
     std::string* error_description) {
   rapidjson::Document document;
@@ -55,7 +40,7 @@ Result NotificationInfo::FromJson(
   }
 
   if (document.HasMember("id")) {
-    id = document["id"].GetString();
+    uuid = document["id"].GetString();
   }
 
   if (document.HasMember("creative_set_id")) {
@@ -67,34 +52,36 @@ Result NotificationInfo::FromJson(
   }
 
   if (document.HasMember("advertiser")) {
-    advertiser = document["advertiser"].GetString();
+    title = document["advertiser"].GetString();
   }
 
   if (document.HasMember("text")) {
-    text = document["text"].GetString();
+    body = document["text"].GetString();
   }
 
   if (document.HasMember("url")) {
-    url = document["url"].GetString();
+    target_url = document["url"].GetString();
   }
 
   if (document.HasMember("uuid")) {
-    uuid = document["uuid"].GetString();
+    creative_instance_id = document["uuid"].GetString();
   }
 
   if (document.HasMember("confirmation_type")) {
-    std::string confirmation_type = document["confirmation_type"].GetString();
-    type = ConfirmationType(confirmation_type);
+    confirmation_type =
+        ConfirmationType(document["confirmation_type"].GetString());
   }
 
   return SUCCESS;
 }
 
-void SaveToJson(JsonWriter* writer, const NotificationInfo& info) {
+void SaveToJson(
+    JsonWriter* writer,
+    const AdNotificationInfo& info) {
   writer->StartObject();
 
   writer->String("id");
-  writer->String(info.id.c_str());
+  writer->String(info.uuid.c_str());
 
   writer->String("creative_set_id");
   writer->String(info.creative_set_id.c_str());
@@ -103,20 +90,20 @@ void SaveToJson(JsonWriter* writer, const NotificationInfo& info) {
   writer->String(info.category.c_str());
 
   writer->String("advertiser");
-  writer->String(info.advertiser.c_str());
+  writer->String(info.title.c_str());
 
   writer->String("text");
-  writer->String(info.text.c_str());
+  writer->String(info.body.c_str());
 
   writer->String("url");
-  writer->String(info.url.c_str());
+  writer->String(info.target_url.c_str());
 
   writer->String("uuid");
-  writer->String(info.uuid.c_str());
+  writer->String(info.creative_instance_id.c_str());
 
   writer->String("confirmation_type");
-  auto type = std::string(info.type);
-  writer->String(type.c_str());
+  auto confirmation_type = std::string(info.confirmation_type);
+  writer->String(confirmation_type.c_str());
 
   writer->EndObject();
 }
