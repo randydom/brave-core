@@ -193,10 +193,66 @@ class NewTabPage extends React.Component<Props, State> {
     this.setState({ showSettingsMenu: !this.state.showSettingsMenu })
   }
 
+  renderRewardsContent () {
+    const { newTabData } = this.props
+    const {
+      rewardsState,
+      showRewards: rewardsWidgetOn,
+      dismissedBrandedWallpaperNotification,
+      dismissedPreOptInBrandedWallpaperNotification
+    } = newTabData
+    const {
+      enabledAds: adsOn,
+      enabledMain: rewardsOn
+    } = rewardsState
+    const isShowingBrandedWallpaper = newTabData.brandedWallpaperData ? true : false
+    const shouldShowBrandedWallpaperNotification = isShowingBrandedWallpaper && (
+      (!adsOn || !rewardsOn)
+        ? !dismissedPreOptInBrandedWallpaperNotification
+        : !dismissedBrandedWallpaperNotification
+    )
+    const shouldShowRewardsWidget = rewardsWidgetOn || shouldShowBrandedWallpaperNotification
+    return shouldShowRewardsWidget && <S.GridItemRewards><Rewards
+    {...rewardsState}
+    preventFocus={!rewardsWidgetOn}
+    onCreateWallet={this.createWallet}
+    onEnableAds={this.enableAds}
+    onEnableRewards={this.enableRewards}
+    isShowingBrandedWallpaper={isShowingBrandedWallpaper}
+    showBrandedWallpaperNotification={shouldShowBrandedWallpaperNotification}
+    onDisableBrandedWallpaper={this.disableBrandedWallpaper}
+    brandedWallpaperData={newTabData.brandedWallpaperData}
+    textDirection={newTabData.textDirection}
+    hideWidget={this.toggleShowRewards}
+    isNotification={!rewardsWidgetOn}
+    onDismissNotification={this.dismissNotification}
+    menuPosition={'left'}
+  /></S.GridItemRewards>
+
+
+    // // Cases where we show a notification
+    // if (!rewardsWidgetOn) {
+    //   if (!adsSupported) {
+    //     return null;
+    //   }
+    //   if (!adsOn) {
+    //     // Show notification or not
+    //     if (!adsSupported) {
+    //       return null
+    //     }
+    //   }
+    //   if (!rewardsOn) {
+    //     // Show notification or not
+    //     return null
+    //   }
+    // }
+
+  }
+
   render () {
     const { newTabData, actions } = this.props
     const { showSettingsMenu } = this.state
-    const { rewardsState } = newTabData
+    // const { rewardsState } = newTabData
 
     if (!newTabData) {
       return null
@@ -204,6 +260,8 @@ class NewTabPage extends React.Component<Props, State> {
 
     const hasImage = this.imageSource !== undefined
     const isShowingBrandedWallpaper = newTabData.brandedWallpaperData ? true : false
+
+
 
     return (
       <App dataIsReady={newTabData.initialDataLoaded}>
@@ -266,7 +324,8 @@ class NewTabPage extends React.Component<Props, State> {
                 />
               )
             }
-          </List></S.GridItemTopSites>}
+          </List></S.GridItemTopSites>
+          }
           {
             this.props.newTabData.showSiteRemovalNotification
             ? <S.GridItemNotification>
@@ -274,24 +333,7 @@ class NewTabPage extends React.Component<Props, State> {
               </S.GridItemNotification>
             : null
           }
-          {newTabData.showRewards &&
-          <S.GridItemRewards>
-            <Rewards
-              {...rewardsState}
-              onCreateWallet={this.createWallet}
-              onEnableAds={this.enableAds}
-              onEnableRewards={this.enableRewards}
-              isShowingBrandedWallpaper={isShowingBrandedWallpaper}
-              showBrandedWallpaperNotification={isShowingBrandedWallpaper && !newTabData.dismissedBrandedWallpaperNotification}
-              onDisableBrandedWallpaper={this.disableBrandedWallpaper}
-              brandedWallpaperData={newTabData.brandedWallpaperData}
-              textDirection={newTabData.textDirection}
-              hideWidget={this.toggleShowRewards}
-              onDismissNotification={this.dismissNotification}
-              menuPosition={'left'}
-            />
-          </S.GridItemRewards>
-          }
+            {this.renderRewardsContent()}
           <Footer>
             {isShowingBrandedWallpaper && newTabData.brandedWallpaperData &&
              newTabData.brandedWallpaperData.logo &&
