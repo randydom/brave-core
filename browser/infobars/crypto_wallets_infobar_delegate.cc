@@ -13,6 +13,8 @@
 #include "brave/common/extensions/extension_constants.h"
 #include "brave/common/pref_names.h"
 #include "brave/common/url_constants.h"
+#include "brave/extensions/browser/web3_provider_extension_registry.h"
+#include "brave/extensions/browser/web3_provider_extension_registry_factory.h"
 #include "brave/grit/brave_generated_resources.h"
 #include "chrome/browser/infobars/infobar_service.h"
 #include "chrome/browser/ui/browser_finder.h"
@@ -24,6 +26,8 @@
 #include "content/public/browser/browser_context.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/views/vector_icons.h"
+
+using extensions::Web3ProviderExtensionRegistryFactory;
 
 // static
 void CryptoWalletsInfoBarDelegate::Create(InfoBarService* infobar_service,
@@ -90,11 +94,18 @@ bool CryptoWalletsInfoBarDelegate::Accept() {
     content::WebContents* web_contents =
       InfoBarService::WebContentsFromInfoBar(infobar());
     if (web_contents) {
-      user_prefs::UserPrefs::Get(web_contents->GetBrowserContext())->
+      auto* browser_context = web_contents->GetBrowserContext();
+      user_prefs::UserPrefs::Get(browser_context)->
           SetInteger(kBraveWalletWeb3Provider,
               static_cast<int>(BraveWalletWeb3ProviderTypes::CRYPTO_WALLETS));
       Browser* browser = chrome::FindBrowserWithWebContents(web_contents);
       brave::ShowBraveWallet(browser);
+
+      auto* web3_registry =
+          Web3ProviderExtensionRegistryFactory::GetForBrowserContext(
+              browser_context);
+      web3_registry->TriggerOnWeb3ProviderChanged(
+          ethereum_remote_client_extension_id);
     }
   }
   return true;
@@ -107,6 +118,12 @@ bool CryptoWalletsInfoBarDelegate::Cancel() {
     user_prefs::UserPrefs::Get(web_contents->GetBrowserContext())->
         SetInteger(kBraveWalletWeb3Provider,
             static_cast<int>(BraveWalletWeb3ProviderTypes::METAMASK));
+
+    auto* browser_context = web_contents->GetBrowserContext();
+    auto* web3_registry =
+        Web3ProviderExtensionRegistryFactory::GetForBrowserContext(
+            browser_context);
+    web3_registry->TriggerOnWeb3ProviderChanged(metamask_extension_id);
   }
   return true;
 }
